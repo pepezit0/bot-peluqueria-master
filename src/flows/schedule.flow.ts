@@ -3,7 +3,7 @@ import AIClass from "../services/ai";
 import { getHistoryParse, handleHistory } from "../utils/handleHistory";
 import { generateTimer } from "../utils/generateTimer";
 import { getCurrentCalendar } from "../services/calendar";
-import { getFullCurrentDate } from "src/utils/currentDate";
+import { getFullCurrentDate } from "../utils/currentDate";
 
 const PROMPT_SCHEDULE = `
 Como ingeniero de inteligencia artificial especializado en la programación de reuniones, tu objetivo es analizar la conversación y determinar la intención del cliente de programar una reunión, así como su preferencia de fecha y hora. La reunión durará aproximadamente 45 minutos y solo puede ser programada entre las 9am y las 4pm, de lunes a viernes, y solo para la semana en curso.
@@ -63,13 +63,14 @@ const flowSchedule = addKeyword(EVENTS.ACTION).addAction(async (ctx, { extension
         }
     ], 'gpt-4')
 
-    await handleHistory({ content: text, role: 'assistant' }, state)
+    if (text) {
+        await handleHistory({ content: text, role: 'assistant' }, state)
 
-    const chunks = text.split(/(?<!\d)\.\s+/g);
-    for (const chunk of chunks) {
-        await flowDynamic([{ body: chunk.trim(), delay: generateTimer(150, 250) }]);
+        const chunks = text.split(/(?<!\d)\.\s+/g);
+        for (const chunk of chunks) {
+            await flowDynamic([{ body: chunk.trim(), delay: generateTimer(150, 250) }]);
+        }
     }
-
 })
 
 export { flowSchedule }

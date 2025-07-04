@@ -5,6 +5,12 @@ import qrcode from 'qrcode-terminal'
 import AIClass from './services/ai'
 import flows from './flows'
 
+// Verificar que la API key existe
+if (!process.env.OPENAI_API_KEY) {
+    console.error('❌ Error: OPENAI_API_KEY no está definida en el archivo .env')
+    process.exit(1)
+}
+
 const ai = new AIClass(process.env.OPENAI_API_KEY, 'gpt-3.5-turbo-16k')
 
 const main = async () => {
@@ -13,25 +19,10 @@ const main = async () => {
     const provider = createProvider(BaileysProvider, {
         name: 'bot-session',
         gifPlayback: false,
-        usePairingCode: false, // Forzar usar QR en lugar de código de emparejamiento
-        phoneNumber: null
+        usePairingCode: false
     })
 
-    // Escuchar eventos del proveedor
-    provider.on('ready', () => {
-        console.log('✅ Bot listo y conectado!')
-    })
-
-    provider.on('auth_failure', (error) => {
-        console.error('❌ Error de autenticación:', error)
-    })
-
-    provider.on('qr', (qr) => {
-        console.log('📱 Código QR generado:')
-        qrcode.generate(qr, { small: true })
-    })
-
-    await createBot(
+    const bot = await createBot(
         {
             flow: flows,
             database: new MemoryDB(),
@@ -42,7 +33,12 @@ const main = async () => {
         }
     )
 
-    console.log('🚀 Bot iniciado correctamente. Esperando código QR...')
+    console.log('🚀 Bot iniciado correctamente.')
+    console.log('📱 El código QR debería aparecer en breve...')
+    console.log('💡 Si no aparece, verifica tu conexión a internet')
 }
 
-main().catch(console.error)
+main().catch((error) => {
+    console.error('❌ Error al iniciar el bot:', error)
+    process.exit(1)
+})

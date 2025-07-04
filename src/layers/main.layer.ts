@@ -32,7 +32,7 @@ export default async (_: BotContext, { state, gotoFlow, extensions }: BotMethods
         }
     ])
 
-    if (text.includes('HABLAR')) return gotoFlow(flowSeller)
-    if (text.includes('AGENDAR')) return gotoFlow(flowSchedule)
-    if (text.includes('CONFIRMAR')) return gotoFlow(flowConfirm)
+    if (text?.includes('HABLAR')) return gotoFlow(flowSeller)
+    if (text?.includes('AGENDAR')) return gotoFlow(flowSchedule)
+    if (text?.includes('CONFIRMAR')) return gotoFlow(flowConfirm)
 }

@@ -2,7 +2,7 @@ import { addKeyword, EVENTS } from "@bot-whatsapp/bot";
 import { generateTimer } from "../utils/generateTimer";
 import { getHistoryParse, handleHistory } from "../utils/handleHistory";
 import AIClass from "../services/ai";
-import { getFullCurrentDate } from "src/utils/currentDate";
+import { getFullCurrentDate } from "../utils/currentDate";
 
 const PROMPT_SELLER = `Eres el asistente virtual en la prestigiosa barbería "Barbería Flow 25", ubicada en Madrid, Plaza de Castilla 4A. Tu principal responsabilidad es responder a las consultas de los clientes y ayudarles a programar sus citas.
 
@@ -37,7 +37,6 @@ INSTRUCCIONES:
 
 Respuesta útil:`;
 
-
 export const generatePromptSeller = (history: string) => {
     const nowDate = getFullCurrentDate()
     return PROMPT_SELLER.replace('{HISTORIAL_CONVERSACION}', history).replace('{CURRENT_DAY}', nowDate)
@@ -59,11 +58,13 @@ const flowSeller = addKeyword(EVENTS.ACTION).addAction(async (_, { state, flowDy
             }
         ])
 
-        await handleHistory({ content: text, role: 'assistant' }, state)
+        if (text) {
+            await handleHistory({ content: text, role: 'assistant' }, state)
 
-        const chunks = text.split(/(?<!\d)\.\s+/g);
-        for (const chunk of chunks) {
-            await flowDynamic([{ body: chunk.trim(), delay: generateTimer(150, 250) }]);
+            const chunks = text.split(/(?<!\d)\.\s+/g);
+            for (const chunk of chunks) {
+                await flowDynamic([{ body: chunk.trim(), delay: generateTimer(150, 250) }]);
+            }
         }
     } catch (err) {
         console.log(`[ERROR]:`, err)

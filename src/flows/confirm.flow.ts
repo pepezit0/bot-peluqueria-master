@@ -2,7 +2,7 @@ import { addKeyword, EVENTS } from "@bot-whatsapp/bot";
 import AIClass from "../services/ai";
 import { clearHistory, handleHistory, getHistoryParse } from "../utils/handleHistory";
 import { getFullCurrentDate } from "../utils/currentDate";
-import { appToCalendar } from "src/services/calendar";
+import { appToCalendar } from "../services/calendar";
 
 const generatePromptToFormatDate = (history: string) => {
     const prompt = `Fecha de Hoy:${getFullCurrentDate()}, Basado en el Historial de conversacion: 
@@ -48,9 +48,11 @@ const flowConfirm = addKeyword(EVENTS.ACTION).addAction(async (_, { flowDynamic 
         }
     ], 'gpt-4')
 
-    await handleHistory({ content: text, role: 'assistant' }, state)
-    await flowDynamic(`¿Me confirmas fecha y hora?: ${text}`)
-    await state.update({ startDate: text })
+    if (text) {
+        await handleHistory({ content: text, role: 'assistant' }, state)
+        await flowDynamic(`¿Me confirmas fecha y hora?: ${text}`)
+        await state.update({ startDate: text })
+    }
 })
     .addAction({ capture: true }, async (ctx, { state, flowDynamic }) => {
         await flowDynamic(`Ultima pregunta ¿Cual es tu email?`)
@@ -66,9 +68,11 @@ const flowConfirm = addKeyword(EVENTS.ACTION).addAction(async (_, { flowDynamic 
             }
         ])
 
-        await appToCalendar(text)
-        clearHistory(state)
-        await flowDynamic('Listo! agendado Buen dia')
+        if (text) {
+            await appToCalendar(text)
+            clearHistory(state)
+            await flowDynamic('Listo! agendado Buen dia')
+        }
     })
 
 export { flowConfirm }
