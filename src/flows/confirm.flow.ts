@@ -3,12 +3,15 @@ import AIClass from "../services/ai";
 import { clearHistory, handleHistory, getHistoryParse } from "../utils/handleHistory";
 import { getFullCurrentDate } from "../utils/currentDate";
 import { appToCalendar } from "../services/calendar";
+import { cleanText } from "../utils/cleanText";
+import { flowSchedule } from "../flows/schedule.flow";
+
 
 const generatePromptToFormatDate = (history: string) => {
     const prompt = `Fecha de Hoy:${getFullCurrentDate()}, Basado en el Historial de conversacion: 
     ${history}
     ----------------
-    Fecha ideal:...dd / mm hh:mm`
+    ...dd / mm hh:mm`
 
     return prompt
 }
@@ -31,6 +34,23 @@ const generateJsonParse = (info: string) => {
     return prompt
 }
 
+
+/**
+ * Devuelve "ACEPTA" si el cliente confirma la fecha/hora
+ * o "REAGENDAR" si desea cambiarla o cancelarla.
+ */
+const makeCheckDatePrompt = (msg: string) => `
+Eres un asistente virtual de una barbería.
+El cliente ha respondido al horario propuesto con el siguiente texto:
+
+"${msg}"
+
+Responde ÚNICAMENTE con:
+- ACEPTA …… si confirma la cita tal como está
+- REAGENDAR … si quiere moverla, cancelarla o elegir otra hora
+`.trim();
+
+
 /**
  * Encargado de pedir los datos necesarios para registrar el evento en el calendario
  */
@@ -49,14 +69,29 @@ const flowConfirm = addKeyword(EVENTS.ACTION).addAction(async (_, { flowDynamic 
     ], 'gpt-4')
 
     if (text) {
-        await handleHistory({ content: text, role: 'assistant' }, state)
-        await flowDynamic(`¿Me confirmas fecha y hora?: ${text}`)
-        await state.update({ startDate: text })
+        const clean = cleanText(text);
+        await handleHistory({ content: clean, role: 'assistant' }, state);
+        await flowDynamic(`¿Me confirma fecha y hora?: ${clean}`);
+        await state.update({ startDate: clean });
     }
 })
-    .addAction({ capture: true }, async (ctx, { state, flowDynamic }) => {
-        await flowDynamic(`Ultima pregunta ¿Cual es tu email?`)
+    .addAction({ capture: true }, async (ctx, { state, flowDynamic, gotoFlow, extensions }) => {
+        const ai = extensions.ai as AIClass;
+
+        // --- Llamamos a OpenAI para saber si acepta o quiere otra hora
+        const intent = await ai.createChat([
+            { role: 'system', content: makeCheckDatePrompt(ctx.body) }
+        ]);
+
+        if (intent?.includes('REAGENDAR')) {
+            await flowDynamic('Entendido, revisemos otro horario.');   // respuesta opcional
+            return gotoFlow(flowSchedule);                             // ← vuelve al flujo de agenda
+        }
+
+        // Si el cliente acepta, seguimos con el flujo normal:
+        await flowDynamic('Última pregunta, ¿cuál es su email?');
     })
+
     .addAction({ capture: true }, async (ctx, { state, extensions, flowDynamic }) => {
         const infoCustomer = `Name: ${state.get('name')}, StarteDate: ${state.get('startDate')}, email: ${ctx.body}`
         const ai = extensions.ai as AIClass
@@ -69,9 +104,10 @@ const flowConfirm = addKeyword(EVENTS.ACTION).addAction(async (_, { flowDynamic 
         ])
 
         if (text) {
-            await appToCalendar(text)
-            clearHistory(state)
-            await flowDynamic('Listo! agendado Buen dia')
+            const clean = cleanText(text);
+            await appToCalendar(clean);
+            clearHistory(state);
+            await flowDynamic('Listo! agendado Buen dia');
         }
     })
 

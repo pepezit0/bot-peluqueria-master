@@ -3,6 +3,7 @@ import { generateTimer } from "../utils/generateTimer";
 import { getHistoryParse, handleHistory } from "../utils/handleHistory";
 import AIClass from "../services/ai";
 import { getFullCurrentDate } from "../utils/currentDate";
+import { cleanText } from "../utils/cleanText"; 
 
 const PROMPT_SELLER = `Eres el asistente virtual en la prestigiosa barbería "Barbería Flow 25", ubicada en Madrid, Plaza de Castilla 4A. Tu principal responsabilidad es responder a las consultas de los clientes y ayudarles a programar sus citas.
 
@@ -33,7 +34,11 @@ EJEMPLOS DE RESPUESTAS:
 
 INSTRUCCIONES:
 - NO saludes
-- Respuestas cortas ideales para enviar por whatsapp con emojis
+- NO uses emojis
+- Respuestas cortas ideales para enviar por whatsapp
+- Mantén un tono formal y profesional
+- No copies muletillas o jerga del cliente (bro, tío, etc.)
+- No encierres tu respuesta entre comillas
 
 Respuesta útil:`;
 
@@ -59,9 +64,10 @@ const flowSeller = addKeyword(EVENTS.ACTION).addAction(async (_, { state, flowDy
         ])
 
         if (text) {
-            await handleHistory({ content: text, role: 'assistant' }, state)
+            const clean = cleanText(text);
+            await handleHistory({ content: clean, role: 'assistant' }, state);
 
-            const chunks = text.split(/(?<!\d)\.\s+/g);
+            const chunks = clean.split(/(?<!\d)\.\s+/g);
             for (const chunk of chunks) {
                 await flowDynamic([{ body: chunk.trim(), delay: generateTimer(150, 250) }]);
             }
