@@ -1,10 +1,9 @@
 import { EVENTS, addKeyword } from "@bot-whatsapp/bot";
-import conversationalLayer from "../layers/conversational.layer";
-import mainLayer from "../layers/main.layer";
 
 /**
- * Este flow responde a cualquier palabra que escriban
+ * Saluda una sola vez al entrar y pasa al mainLayer
  */
-export default addKeyword(EVENTS.WELCOME)
-    .addAction(conversationalLayer)
-    .addAction(mainLayer)
+export default addKeyword(EVENTS.WELCOME).addAction(async (_, { flowDynamic, gotoFlow }) => {
+    await flowDynamic("¡Hola! ¿En qué puedo ayudarle hoy?");
+    // mainLayer decidirá la intención a partir de la siguiente entrada
+});

@@ -5,6 +5,7 @@ import { getFullCurrentDate } from "../utils/currentDate";
 import { appToCalendar } from "../services/calendar";
 import { cleanText } from "../utils/cleanText";
 import { flowSchedule } from "../flows/schedule.flow";
+import { markCitaConfirmada } from "../utils/stateFlags";
 
 
 const generatePromptToFormatDate = (history: string) => {
@@ -107,6 +108,7 @@ const flowConfirm = addKeyword(EVENTS.ACTION).addAction(async (_, { flowDynamic 
             const clean = cleanText(text);
             await appToCalendar(clean);
             clearHistory(state);
+            await markCitaConfirmada(state)
             await flowDynamic('Listo! agendado Buen dia');
         }
     })
