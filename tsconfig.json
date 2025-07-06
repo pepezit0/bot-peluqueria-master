@@ -13,8 +13,7 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "src/*": ["src/*"],
-      "utils/*": ["src/utils/*"]
+      "src/*": ["src/*"]
     },
     "types": ["node"]
   },
