@@ -24,9 +24,6 @@ const generateJsonParse = (info: string) => {
     
     {
         "name": "Leifer",
-        "interest": "n/a",
-        "value": "0",
-        "email": "fef@fef.com",
         "startDate": "2024/02/15 00:00:00"
     }
     
